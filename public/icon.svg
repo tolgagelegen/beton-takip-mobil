@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="drumGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="50%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Arka Plan Squircle (Modern App İkonu) -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="none" stroke="#334155" stroke-width="4" stroke-opacity="0.6" />
+
+  <!-- Dış Dekoratif Çember Işıltısı -->
+  <circle cx="256" cy="240" r="180" fill="#f59e0b" fill-opacity="0.05" />
+
+  <!-- Mikser / Beton Kamyonu İkonu Grafiği -->
+  <g filter="url(#shadow)" transform="translate(48, 60)">
+    
+    <!-- Mikser Kazanı (Dönen Tambur) -->
+    <path d="M 120 220 L 210 110 C 240 100 270 140 250 200 L 170 260 Z" fill="url(#drumGrad)" />
+    <!-- Tambur Çizgileri / Spiral -->
+    <path d="M 140 195 Q 190 140 235 155" stroke="#ffffff" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M 170 235 Q 210 180 245 200" stroke="#ffffff" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.6" />
+    
+    <!-- Kamyon Kabini (Ön Kısım) -->
+    <path d="M 270 160 L 330 160 C 345 160 360 175 365 195 L 385 245 L 385 270 C 385 275 380 280 375 280 L 260 280 L 260 170 C 260 165 265 160 270 160 Z" fill="url(#orangeGrad)" />
+    
+    <!-- Kabin Camı -->
+    <path d="M 290 175 L 335 175 C 342 175 350 185 352 195 L 365 230 L 290 230 Z" fill="#0f172a" />
+    
+    <!-- Far -->
+    <rect x="375" y="250" width="12" height="16" rx="4" fill="#fef08a" />
+
+    <!-- Şasi / Gövde Altı -->
+    <rect x="70" y="270" width="310" height="22" rx="6" fill="#475569" />
+
+    <!-- Arka Oluk (Beton Boşaltma Oluğu) -->
+    <path d="M 85 210 L 60 260 L 75 265 L 105 220 Z" fill="#94a3b8" />
+
+    <!-- Tekerlek 1 (Arka Çift) -->
+    <circle cx="125" cy="305" r="38" fill="#0f172a" stroke="#64748b" stroke-width="8" />
+    <circle cx="125" cy="305" r="16" fill="#e2e8f0" />
+    
+    <!-- Tekerlek 2 (Orta) -->
+    <circle cx="195" cy="305" r="38" fill="#0f172a" stroke="#64748b" stroke-width="8" />
+    <circle cx="195" cy="305" r="16" fill="#e2e8f0" />
+
+    <!-- Tekerlek 3 (Ön) -->
+    <circle cx="335" cy="305" r="38" fill="#0f172a" stroke="#64748b" stroke-width="8" />
+    <circle cx="335" cy="305" r="16" fill="#e2e8f0" />
+  </g>
+
+  <!-- Alt Metin: "BETON TAKİP" -->
+  <text x="256" y="445" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="34" letter-spacing="3" fill="#ffffff" text-anchor="middle">
+    BETON TAKİP
+  </text>
+  <text x="256" y="475" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="700" font-size="14" letter-spacing="4" fill="#f59e0b" text-anchor="middle">
+    MOBİL SİSTEMİ
+  </text>
+</svg>

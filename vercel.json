@@ -1,0 +1,36 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/assets/index-:hash.js",
+      "destination": "/assets/index.js"
+    },
+    {
+      "source": "/assets/index-:hash.css",
+      "destination": "/assets/index.css"
+    },
+    {
+      "source": "/((?!assets/|icon\\.svg|manifest\\.json|sw\\.js).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
