@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Beton Mobil" />
+    <meta name="application-name" content="Beton Mobil" />
+
+    <!-- Uygulama Logosu ve İkonları -->
+    <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="manifest" href="./manifest.json" />
+
+    <title>Beton Mobil - Şantiye Döküm & Bağlantı Takip Sistemi</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      // Eski bozuk Service Worker ve önbellekleri otomatik temizle (Beyaz ekran önleyici)
+      (function () {
+        try {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+              for (var i = 0; i < registrations.length; i++) {
+                registrations[i].unregister();
+              }
+            }).catch(function () {});
+          }
+          if ('caches' in window) {
+            caches.keys().then(function (keys) {
+              for (var j = 0; j < keys.length; j++) {
+                caches.delete(keys[j]);
+              }
+            }).catch(function () {});
+          }
+        } catch (e) {}
+
+        // Eski JS dosyası 404 verirse sayfayı önbelleksiz otomatik yenile
+        window.addEventListener('error', function (e) {
+          var target = e && e.target;
+          if (target && (target.tagName === 'SCRIPT' || target.tagName === 'LINK')) {
+            if (!sessionStorage.getItem('beton_auto_reloaded')) {
+              sessionStorage.setItem('beton_auto_reloaded', '1');
+              window.location.replace(window.location.pathname + '?v=' + Date.now());
+            }
+          }
+        }, true);
+      })();
+    </script>
+    <script type="module" crossorigin src="./assets/index.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index.css">
+  </head>
+  <body class="bg-slate-100 text-slate-800 antialiased font-['Plus_Jakarta_Sans',sans-serif] selection:bg-amber-500 selection:text-white">
+    <div id="root">
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;color:#fff;font-family:sans-serif;padding:24px;text-align:center;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#f59e0b;color:#0f172a;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:26px;margin-bottom:16px;">B</div>
+        <div style="font-size:18px;font-weight:800;letter-spacing:-0.02em;">BETON MOBİL</div>
+        <div style="font-size:13px;color:#94a3b8;margin-top:6px;">Sistem yükleniyor, lütfen bekleyin...</div>
+      </div>
+    </div>
+  </body>
+</html>
