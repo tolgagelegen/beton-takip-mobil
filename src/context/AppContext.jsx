@@ -495,10 +495,13 @@ export function AppProvider({ children }) {
         }
 
         if (ft) {
+          const irSet = new Set((ir || []).map(i => (i?.irsaliye_no ? String(i.irsaliye_no).trim().toUpperCase() : '')).filter(Boolean));
           setFaturalar(ft.map(f => {
             const fIrsNolar = Array.isArray(f.irsaliye_nolar) ? f.irsaliye_nolar : [];
-            const eslesenIrs = (ir || []).filter(i => fIrsNolar.includes(i.irsaliye_no));
+            const normalizedFIrs = fIrsNolar.map(n => String(n).trim().toUpperCase()).filter(Boolean);
+            const eslesenIrs = (ir || []).filter(i => i?.irsaliye_no && normalizedFIrs.includes(String(i.irsaliye_no).trim().toUpperCase()));
             const topM3 = eslesenIrs.reduce((sum, i) => sum + (Number(i.m3) || 0), 0);
+            const eksikCount = normalizedFIrs.filter(n => !irSet.has(n)).length;
 
             // Gruplanmış kalemler (Şantiye + Beton Sınıfı)
             const kalemMap = {};
@@ -525,11 +528,11 @@ export function AppProvider({ children }) {
               tedarikci: f.firma || '',
               baglantiId: f.baglanti_id || '',
               toplamTutar: Number(f.toplam_tutar) || 0,
-              irsaliyeNolar: fIrsNolar,
-              irsaliyeNo: Array.isArray(f.irsaliye_nolar) ? f.irsaliye_nolar.join(', ') : '',
+              irsaliyeNolar: normalizedFIrs,
+              irsaliyeNo: normalizedFIrs.join(', '),
               metrajM3: topM3,
               kalemler: derivedKalemler,
-              karsilastirmaDurumu: fIrsNolar.length > 0 ? 'UYUMLU' : 'EKSİK'
+              karsilastirmaDurumu: normalizedFIrs.length === 0 ? 'EKSİK' : (eksikCount === 0 ? 'UYUMLU' : `EKSİK (${eksikCount} Adet)`)
             };
           }));
         }
@@ -1309,13 +1312,24 @@ export function AppProvider({ children }) {
   };
 
   const addFatura = async (yeniFatura) => {
+    const cleanFaturaNo = (yeniFatura.faturaNo || '').trim();
+    if (!cleanFaturaNo) {
+      alert('Lütfen geçerli bir fatura numarası giriniz!');
+      return null;
+    }
+
     const faturaId = 'fat-' + Date.now();
     const metraj = Number(yeniFatura.metrajM3) || 0;
     const tutar = Number(yeniFatura.toplamTutar) || 0;
+    const parsedIrsNolar = yeniFatura.irsaliyeNo
+      ? [...new Set(String(yeniFatura.irsaliyeNo).split(/[\s,;]+/).map(s => s.trim().toUpperCase()).filter(Boolean))]
+      : (Array.isArray(yeniFatura.irsaliyeNolar) ? yeniFatura.irsaliyeNolar.map(s => String(s).trim().toUpperCase()).filter(Boolean) : []);
 
-    let karsilastirmaDurumu = 'ESLESEMEDI';
-    let farkM3 = 0;
-    const eslesenDokum = sahaDokumleri.find(d => d.id === yeniFatura.eslesenSahaDokumId);
+    let karsilastirmaDurumu = yeniFatura.karsilastirmaDurumu || '';
+    let farkM3 = yeniFatura.farkM3 ?? 0;
+    const eslesenDokum = yeniFatura.eslesenSahaDokumId
+      ? sahaDokumleri.find(d => d.id === yeniFatura.eslesenSahaDokumId)
+      : null;
 
     if (eslesenDokum) {
       farkM3 = metraj - eslesenDokum.toplamM3;
@@ -1330,17 +1344,70 @@ export function AppProvider({ children }) {
         }
         return d;
       }));
+    } else if (!karsilastirmaDurumu) {
+      if (parsedIrsNolar.length > 0) {
+        const kayitliSet = new Set(
+          (irsaliyeler || [])
+            .map(i => (i?.irsaliyeNo ? String(i.irsaliyeNo).trim().toUpperCase() : ''))
+            .filter(Boolean)
+        );
+        const eksikSayisi = parsedIrsNolar.filter(no => !kayitliSet.has(no)).length;
+        karsilastirmaDurumu = eksikSayisi === 0 ? 'UYUMLU' : `EKSİK (${eksikSayisi} Adet)`;
+      } else {
+        karsilastirmaDurumu = 'ESLESEMEDI';
+      }
     }
 
     const fullFatura = {
       ...yeniFatura,
       id: faturaId,
+      faturaNo: cleanFaturaNo,
+      irsaliyeNolar: parsedIrsNolar,
+      irsaliyeNo: parsedIrsNolar.join(', '),
       metrajM3: metraj,
       toplamTutar: tutar,
       birimFiyat: Number(yeniFatura.birimFiyat) || 0,
       karsilastirmaDurumu,
       farkM3
     };
+
+    if (supabase) {
+      try {
+        const dbPayload = {
+          id: fullFatura.id,
+          fatura_no: cleanFaturaNo,
+          tarih: fullFatura.faturaTarihi || fullFatura.tarih || new Date().toISOString().split('T')[0],
+          firma: fullFatura.tedarikci || 'Tedarikçi',
+          baglanti_id: fullFatura.baglantiId || null,
+          toplam_tutar: fullFatura.toplamTutar,
+          kdv_dahil: true,
+          durum: 'onaylandi',
+          irsaliye_nolar: parsedIrsNolar
+        };
+
+        let { error } = await supabase.from('faturalar').insert(dbPayload);
+
+        // Aynı fatura_no bulutta zaten varsa üzerine güncelle
+        if (error && (error.code === '23505' || String(error.message || '').includes('faturalar_fatura_no_key') || String(error.message || '').toLowerCase().includes('duplicate'))) {
+          const { id: _ignoredId, ...updatePayload } = dbPayload;
+          const retry = await supabase
+            .from('faturalar')
+            .update(updatePayload)
+            .eq('fatura_no', cleanFaturaNo);
+          error = retry.error;
+        }
+
+        if (error) {
+          console.error('Fatura kaydedilemedi:', error);
+          alert('Fatura buluta kaydedilemedi: ' + error.message);
+          return null;
+        }
+      } catch (err) {
+        console.error('Fatura bulut bağlantı hatası:', err);
+        alert('Fatura buluta kaydedilemedi (Bağlantı hatası): ' + (err?.message || err));
+        return null;
+      }
+    }
 
     if (yeniFatura.baglantiId) {
       setBaglantilar(prev => prev.map(bag => {
@@ -1365,27 +1432,13 @@ export function AppProvider({ children }) {
       }));
     }
 
-    setFaturalar(prev => [fullFatura, ...prev]);
-
-    if (supabase) {
-      const { error } = await supabase.from('faturalar').insert({
-        id: fullFatura.id,
-        fatura_no: fullFatura.faturaNo,
-        tarih: fullFatura.faturaTarihi || fullFatura.tarih || new Date().toISOString().split('T')[0],
-        firma: fullFatura.tedarikci,
-        baglanti_id: fullFatura.baglantiId,
-        toplam_tutar: fullFatura.toplamTutar,
-        kdv_dahil: true,
-        durum: 'onaylandi',
-        irsaliye_nolar: fullFatura.irsaliyeNo
-          ? String(fullFatura.irsaliyeNo).split(/[\s,;]+/).map(s => s.trim()).filter(Boolean)
-          : []
-      });
-      if (error) {
-        console.error('Fatura kaydedilemedi:', error);
-        alert('Fatura buluta kaydedilemedi: ' + error.message);
+    setFaturalar(prev => {
+      const existingIdx = prev.findIndex(f => (f.faturaNo || '').trim().toUpperCase() === cleanFaturaNo.toUpperCase());
+      if (existingIdx >= 0) {
+        return prev.map((f, idx) => idx === existingIdx ? { ...fullFatura, id: f.id } : f);
       }
-    }
+      return [fullFatura, ...prev];
+    });
 
     return fullFatura;
   };

@@ -688,8 +688,13 @@ export default function AdminView() {
   };
 
   // FATURAYI KAYDET VE BAĞLANTIDAN DÜŞ
-  const handleFaturaSubmit = (e) => {
+  const handleFaturaSubmit = async (e) => {
     e.preventDefault();
+
+    if (!faturaNo.trim()) {
+      alert('Lütfen geçerli bir fatura numarası giriniz!');
+      return;
+    }
 
     if (!baglantiId) {
       alert('Lütfen faturanın düşüleceği bir bağlantı seçiniz!');
@@ -719,6 +724,7 @@ export default function AdminView() {
         tutar: (Number(k.metrajM3) || 0) * (Number(k.birimFiyat) || 0)
       })),
       irsaliyeNo: faturadakiIrsaliyeListesi.join(', '),
+      irsaliyeNolar: faturadakiIrsaliyeListesi,
       metrajM3: toplamGirilenMetraj,
       birimFiyat: faturaKalemleri.length === 1 ? (Number(faturaKalemleri[0].birimFiyat) || 0) : (matrahTutari / (toplamGirilenMetraj || 1)),
       matrahTutari,
@@ -729,20 +735,25 @@ export default function AdminView() {
       tevkifatTutari,
       odenecekTutar,
       toplamTutar: odenecekTutar, // Bağlantı bütçesinden ödenecek net tutar düşer
-      karsilastirmaDurumu: eksikIrsaliyeler.length === 0 ? 'UYUMLU' : `EKSİK (${eksikIrsaliyeler.length} Adet)`,
+      karsilastirmaDurumu: faturadakiIrsaliyeListesi.length === 0
+        ? 'İRSALİYE GİRİLMEDİ'
+        : (eksikIrsaliyeler.length === 0 ? 'UYUMLU' : `EKSİK (${eksikIrsaliyeler.length} Adet)`),
       farkM3: 0,
       aciklama: aciklama.trim()
     };
 
-    addFatura(yeniFatura);
+    const kaydedilenFatura = await addFatura(yeniFatura);
+    if (!kaydedilenFatura) {
+      return;
+    }
 
     // Eşleşen irsaliyelerin durumunu Faturalandı yap
-    eslesenIrsaliyeler.forEach(no => {
+    for (const no of eslesenIrsaliyeler) {
       const irs = (irsaliyeler || []).find(i => (i && i.irsaliyeNo ? String(i.irsaliyeNo).trim().toUpperCase() : '') === no);
       if (irs) {
-        updateIrsaliye(irs.id, { durum: 'Faturalandırıldı', faturaNo: faturaNo.trim() });
+        await updateIrsaliye(irs.id, { durum: 'Faturalandırıldı', faturaNo: faturaNo.trim() });
       }
-    });
+    }
 
     setBasariMesaji(`Fatura (${faturaNo}) ${faturaKalemleri.length} kalem ile işlendi ve ${seciliBaglanti?.sozlesmeNo} bağlantısından ${odenecekTutar.toLocaleString('tr-TR')} ₺ (Tevkifatlı Ödenecek) düşüldü!`);
     setTimeout(() => setBasariMesaji(''), 4500);
